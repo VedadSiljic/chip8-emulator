@@ -130,6 +130,28 @@ void fetchDecodeExecuteInstruction() {
 
             break;
         }
+        case 0xF:
+            switch (opcode & 0x00FF) {
+                case 0x1E:
+                    context.I += context.V[(opcode & 0x0F00) >> 8];
+                    break;
+                case 0x33:
+                    context.memory[context.I] = context.V[(opcode & 0x0F00) >> 8] / 100;
+                    context.memory[context.I + 1] = (context.V[(opcode & 0x0F00) >> 8] % 100) / 10;
+                    context.memory[context.I + 2] = context.V[(opcode & 0x0F00) >> 8] % 10;
+                    break;
+                case 0x55:
+                    for (uint32_t i = 0x0; i <= ((opcode & 0x0F00) >> 8); i++)
+                        context.memory[context.I + i] = context.V[i];
+                    break;
+                case 0x65:
+                    for (uint32_t i = 0x0; i <= ((opcode & 0x0F00) >> 8); i++)
+                        context.V[i] = context.memory[context.I + i];
+                    break;
+                default:
+                    std::cout << "Opcode 0xF not implemented" << std::endl;
+            }
+            break;
         default:
             std::cout << "Opcode not implemented" << std::endl;
     }
