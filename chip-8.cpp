@@ -41,8 +41,13 @@ void fetchDecodeExecuteInstruction() {
     switch (opcode >> 12) {
         case 0x0:
             if (opcode == 0x00E0) std::fill_n(context.display, 64 * 32, false);
+            else if (opcode == 0x00EE) context.pc = context.stack[context.sp--];
             break;
         case 0x1:
+            context.pc = opcode & 0x0FFF;
+            break;
+        case 0x2:
+            context.stack[++context.sp] = context.pc;
             context.pc = opcode & 0x0FFF;
             break;
         case 0x3: {
