@@ -2,8 +2,14 @@
 
 #include <algorithm>
 #include <iostream>
+#include <chrono>
+#include <fstream>
 
 Chip8 context;
+
+bool* getDisplay() {
+    return context.display;
+}
 
 void loadFontsIntoMemory() {
     uint8_t fonts[] = {
@@ -68,4 +74,34 @@ void fetchDecodeExecuteInstruction() {
         default:
             std::cout << "Opcode not implemented" << std::endl;
     }
+}
+
+void loadRomIntoMemory(const std::string &filename) {
+    std::ifstream file(filename, std::ios::binary);
+    file.read(reinterpret_cast<char*>(context.memory + 0x200), 0x1000 - 0x200);
+    file.close();
+}
+
+void startChip8(const std::string &filename) {
+    loadFontsIntoMemory();
+    loadRomIntoMemory(filename);
+
+    /*const auto INSTRUCTION_TIME_DELAY = std::chrono::nanoseconds(1428571);
+    const auto TIMER_TIME_DELAY  = std::chrono::nanoseconds(16666667);
+    auto lastInstructionTime = std::chrono::steady_clock::now();
+    auto lastTimerTime = std::chrono::steady_clock::now();
+
+    while (true) {
+        if (std::chrono::steady_clock::now() - lastInstructionTime >= INSTRUCTION_TIME_DELAY) {
+            lastInstructionTime = std::chrono::steady_clock::now();
+            fetchDecodeExecuteInstruction();
+        }
+
+        if (std::chrono::steady_clock::now() - lastTimerTime >= TIMER_TIME_DELAY) {
+            lastTimerTime = std::chrono::steady_clock::now();
+            // decrement both timers
+
+            render(context.display);
+        }
+    }*/
 }
