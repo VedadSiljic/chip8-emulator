@@ -1,7 +1,7 @@
 #include "chip-8.h"
 #include <SDL3/SDL.h>
 
-# define GAME_FILENAME "3-corax+.ch8"
+# define GAME_FILENAME "4-flags.ch8"
 
 struct SDLApplication {
     SDL_Window* window;
@@ -57,7 +57,7 @@ struct SDLApplication {
 
     void mainLoop() {
         while (isRunning) {
-            SDL_Delay(1000 / 60);
+            //SDL_Delay(1000 / 60);
             Tick();
         }
     }
