@@ -69,6 +69,47 @@ void fetchDecodeExecuteInstruction() {
         case 0x7:
             context.V[(opcode & 0x0F00) >> 8] += opcode & 0x00FF;
             break;
+        case 0x8:
+            switch (opcode & 0x000F) {
+                case 0x0:
+                    context.V[(opcode & 0x0F00) >> 8] = context.V[(opcode & 0x00F0) >> 4];
+                    break;
+                case 0x1:
+                    context.V[(opcode & 0x0F00) >> 8] |= context.V[(opcode & 0x00F0) >> 4];
+                    break;
+                case 0x2:
+                    context.V[(opcode & 0x0F00) >> 8] &= context.V[(opcode & 0x00F0) >> 4];
+                    break;
+                case 0x3:
+                    context.V[(opcode & 0x0F00) >> 8] ^= context.V[(opcode & 0x00F0) >> 4];
+                    break;
+                case 0x4:
+                    context.V[(opcode & 0x0F00) >> 8] += context.V[(opcode & 0x00F0) >> 4];
+                    if (context.V[(opcode & 0x0F00) >> 8] + context.V[(opcode & 0x00F0) >> 4] > 0xFF) context.V[0xF] = 0x1;
+                    else context.V[0xF] = 0x0;
+                    break;
+                case 0x5:
+                    context.V[(opcode & 0x0F00) >> 8] -= context.V[(opcode & 0x00F0) >> 4];
+                    if (context.V[(opcode & 0x0F00) >> 8] >= context.V[(opcode & 0x00F0) >> 4]) context.V[0xF] = 0x1;
+                    else context.V[0xF] = 0x0;
+                    break;
+                case 0x6:
+                    context.V[0xF] = context.V[(opcode & 0x0F00) >> 8] & 0x01;
+                    context.V[(opcode & 0x0F00) >> 8] >>= 1;
+                    break;
+                case 0x7:
+                    context.V[(opcode & 0x0F00) >> 8] = context.V[(opcode & 0x00F0) >> 4] - context.V[(opcode & 0x0F00) >> 8];
+                    if (context.V[(opcode & 0x0F00) >> 8] <= context.V[(opcode & 0x00F0) >> 4]) context.V[0xF] = 0x1;
+                    else context.V[0xF] = 0x0;
+                    break;
+                case 0xE:
+                    context.V[0xF] = context.V[(opcode & 0x0F00) >> 8] & 0x80; // get the rightmost bit
+                    context.V[(opcode & 0x0F00) >> 8] <<= 1;
+                    break;
+                default:
+                    std::cout << "Opcode 0x8 not implemented" << std::endl;
+            }
+            break;
         case 0xA:
             context.I = opcode & 0x0FFF;
             break;
