@@ -1,7 +1,7 @@
 #include "chip-8.h"
 #include <SDL3/SDL.h>
 
-# define GAME_FILENAME "2-ibm-logo.ch8"
+# define GAME_FILENAME "1-chip8-logo.ch8"
 
 struct SDLApplication {
     SDL_Window* window;
@@ -30,7 +30,13 @@ struct SDLApplication {
     }
 
     void Input() {
-        //TODO Add Input
+        SDL_Event event;
+        while (SDL_PollEvent(&event)) {
+            if (event.type == SDL_EVENT_QUIT) {
+                isRunning = false;
+                continue;
+            }
+        }
     }
 
     void Update() {
