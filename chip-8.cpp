@@ -11,6 +11,10 @@ bool *getDisplay() {
     return context.display;
 }
 
+void setInput(const uint8_t value) {
+    context.keyPressed = value;
+}
+
 void loadFontsIntoMemory() {
     uint8_t fonts[] = {
         0xF0, 0x90, 0x90, 0x90, 0xF0,
@@ -108,8 +112,8 @@ void fetchDecodeExecuteInstruction() {
                     context.V[0xF] = context.V[(opcode & 0x0F00) >> 8] & 0x80; // get the rightmost bit
                     context.V[(opcode & 0x0F00) >> 8] <<= 1;
                     break;
-                default:
-                    std::cout << "Opcode 0x8 not implemented" << std::endl;
+            default:
+                    std::cout << "Opcode 0x8 not implemented, opcode :" << std::uppercase << std::hex << opcode << std::endl;
             }
             break;
         case 0x9:
@@ -125,7 +129,7 @@ void fetchDecodeExecuteInstruction() {
             std::random_device rd;
             std::mt19937 gen(rd());
             std::uniform_int_distribution<uint8_t> dist(0, 255);
-            uint8_t random = dist(gen);
+            const uint8_t random = dist(gen);
 
             context.V[(opcode & 0x0F00) >> 8] = random & (opcode & 0x00FF);
             break;
@@ -148,8 +152,27 @@ void fetchDecodeExecuteInstruction() {
 
             break;
         }
+        case 0xE:
+            if ((opcode & 0x00FF) == 0x9E) {
+                if (context.V[(opcode & 0x0F00) >> 8] == context.keyPressed) context.pc += 2;
+            }
+
+            if ((opcode & 0x00FF) == 0xA1) {
+                if (context.V[(opcode & 0x0F00) >> 8] != context.keyPressed) context.pc += 2;
+            }
+            break;
         case 0xF:
             switch (opcode & 0x00FF) {
+                case 0x0A:
+                    if (context.keyPressed == 0xFF) {
+                        context.pc -= 2;
+                        break;
+                    }
+
+                    context.V[(opcode & 0x0F00) >> 8] = context.keyPressed;
+                    context.keyPressed = 0xFF;
+
+                    break;
                 case 0x1E:
                     context.I += context.V[(opcode & 0x0F00) >> 8];
                     break;
@@ -167,11 +190,11 @@ void fetchDecodeExecuteInstruction() {
                         context.V[i] = context.memory[context.I + i];
                     break;
                 default:
-                    std::cout << "Opcode 0xF not implemented" << std::endl;
+                    std::cout << "Opcode 0xF not implemented, opcode : " << std::uppercase << std::hex << opcode << std::endl;
             }
             break;
         default:
-            std::cout << "Opcode not implemented" << std::endl;
+            std::cout << "Opcode not implemented, opcode : " << std::uppercase << std::hex << opcode << std::endl;
     }
 }
 
@@ -184,23 +207,4 @@ void loadRomIntoMemory(const std::string &filename) {
 void startChip8(const std::string &filename) {
     loadFontsIntoMemory();
     loadRomIntoMemory(filename);
-
-    /*const auto INSTRUCTION_TIME_DELAY = std::chrono::nanoseconds(1428571);
-    const auto TIMER_TIME_DELAY  = std::chrono::nanoseconds(16666667);
-    auto lastInstructionTime = std::chrono::steady_clock::now();
-    auto lastTimerTime = std::chrono::steady_clock::now();
-
-    while (true) {
-        if (std::chrono::steady_clock::now() - lastInstructionTime >= INSTRUCTION_TIME_DELAY) {
-            lastInstructionTime = std::chrono::steady_clock::now();
-            fetchDecodeExecuteInstruction();
-        }
-
-        if (std::chrono::steady_clock::now() - lastTimerTime >= TIMER_TIME_DELAY) {
-            lastTimerTime = std::chrono::steady_clock::now();
-            // decrement both timers
-
-            render(context.display);
-        }
-    }*/
 }

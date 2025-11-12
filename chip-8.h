@@ -12,11 +12,13 @@ struct Chip8 {
     int16_t sp = -1;  // position of top element of the stack
     uint8_t delayTimer = 0, soundTimer = 0;
     bool display[64 * 32]{};
+    uint16_t keyPressed = 0xFF;  // 0xFF for no input
 
 };
 
 void startChip8(const std::string &filename);
 void fetchDecodeExecuteInstruction();
 bool* getDisplay();
+void setInput(uint8_t value);
 
 #endif
