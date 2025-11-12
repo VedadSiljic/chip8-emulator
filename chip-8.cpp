@@ -45,6 +45,19 @@ void fetchDecodeExecuteInstruction() {
         case 0x1:
             context.pc = opcode & 0x0FFF;
             break;
+        case 0x3: {
+            const uint8_t nn = opcode & 0x00FF;
+            if (context.V[(opcode & 0x0F00) >> 8] == nn) context.pc += 2;
+            break;
+        }
+        case 0x4: {
+            const uint8_t nn = opcode & 0x00FF;
+            if (context.V[(opcode & 0x0F00) >> 8] != nn) context.pc += 2;
+            break;
+        }
+        case 0x5:
+            if (context.V[(opcode & 0x0F00) >> 8] == context.V[(opcode & 0x00F0) >> 4]) context.pc += 2;
+            break;
         case 0x6:
             context.V[(opcode & 0x0F00) >> 8] = opcode & 0x00FF;
             break;

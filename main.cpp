@@ -1,7 +1,7 @@
 #include "chip-8.h"
 #include <SDL3/SDL.h>
 
-# define GAME_FILENAME "1-chip8-logo.ch8"
+# define GAME_FILENAME "3-corax+.ch8"
 
 struct SDLApplication {
     SDL_Window* window;
