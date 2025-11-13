@@ -1,14 +1,17 @@
 #include "chip-8.h"
 #include <SDL3/SDL.h>
 
-# define GAME_FILENAME "5-quirks.ch8"
-# define IS_DEBUG true
+#define GAME_FILENAME "5-quirks.ch8"
+#define IS_DEBUG true
+#define INSTRUCTION_DELAY 1428571 // ~700Hz
+#define TIMER_DELAY 16666666 // ~60Hz
 
 struct SDLApplication {
     SDL_Window* window;
     SDL_Renderer* renderer;
     SDL_Texture* texture;
     bool isRunning = true;
+    uint64_t lastInstructionTime, lastTimerTime;
 
     SDLApplication() {
         if (!SDL_Init(SDL_INIT_VIDEO)) SDL_Log("Init Error");
@@ -19,6 +22,9 @@ struct SDLApplication {
 
         SDL_SetRenderLogicalPresentation(renderer, 64, 32, SDL_LOGICAL_PRESENTATION_LETTERBOX);
         SDL_SetTextureScaleMode(texture, SDL_SCALEMODE_NEAREST);
+
+        lastInstructionTime = SDL_GetTicksNS();
+        lastTimerTime = SDL_GetTicksNS();
 
         // Init emulator
         startChip8(GAME_FILENAME);
@@ -118,7 +124,16 @@ struct SDLApplication {
     }
 
     void Update() {
-        fetchDecodeExecuteInstruction();
+        const uint64_t currentTime = SDL_GetTicksNS();
+        if (currentTime >= lastInstructionTime + INSTRUCTION_DELAY) {
+            fetchDecodeExecuteInstruction();
+            lastInstructionTime = currentTime;
+        }
+
+        if (currentTime >= lastTimerTime + TIMER_DELAY) {
+            decrementTimers();
+            lastTimerTime = currentTime;
+        }
     }
 
     void Render() const {
@@ -135,7 +150,6 @@ struct SDLApplication {
 
     void mainLoop() {
         while (isRunning) {
-            //SDL_Delay(1000 / 60);
             Tick();
         }
     }

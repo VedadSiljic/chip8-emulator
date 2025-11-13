@@ -163,6 +163,9 @@ void fetchDecodeExecuteInstruction() {
             break;
         case 0xF:
             switch (opcode & 0x00FF) {
+                case 0x07:
+                    context.V[(opcode & 0x0F00) >> 8] = context.delayTimer;
+                    break;
                 case 0x0A:
                     if (context.keyPressed == 0xFF) {
                         context.pc -= 2;
@@ -173,8 +176,17 @@ void fetchDecodeExecuteInstruction() {
                     context.keyPressed = 0xFF;
 
                     break;
+                case 0x15:
+                    context.delayTimer = context.V[(opcode & 0x0F00) >> 8];
+                    break;
+                case 0x18:
+                    context.soundTimer = context.V[(opcode & 0x0F00) >> 8];
+                    break;
                 case 0x1E:
                     context.I += context.V[(opcode & 0x0F00) >> 8];
+                    break;
+                case 0x29:
+                    context.I = 0x50 + (context.V[(opcode & 0x0F00) >> 8] & 0x0F) * 5;
                     break;
                 case 0x33:
                     context.memory[context.I] = context.V[(opcode & 0x0F00) >> 8] / 100;
@@ -207,4 +219,9 @@ void loadRomIntoMemory(const std::string &filename) {
 void startChip8(const std::string &filename) {
     loadFontsIntoMemory();
     loadRomIntoMemory(filename);
+}
+
+void decrementTimers() {
+    if (context.delayTimer > 0) context.delayTimer--;
+    if (context.soundTimer > 0) context.soundTimer--;
 }

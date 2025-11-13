@@ -20,5 +20,6 @@ void startChip8(const std::string &filename);
 void fetchDecodeExecuteInstruction();
 bool* getDisplay();
 void setInput(uint8_t value);
+void decrementTimers();
 
 #endif
