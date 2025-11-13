@@ -80,12 +80,15 @@ void fetchDecodeExecuteInstruction() {
                     break;
                 case 0x1:
                     context.V[(opcode & 0x0F00) >> 8] |= context.V[(opcode & 0x00F0) >> 4];
+                    context.V[0xF] = 0x0;
                     break;
                 case 0x2:
                     context.V[(opcode & 0x0F00) >> 8] &= context.V[(opcode & 0x00F0) >> 4];
+                    context.V[0xF] = 0x0;
                     break;
                 case 0x3:
                     context.V[(opcode & 0x0F00) >> 8] ^= context.V[(opcode & 0x00F0) >> 4];
+                    context.V[0xF] = 0x0;
                     break;
                 case 0x4:
                     context.V[(opcode & 0x0F00) >> 8] += context.V[(opcode & 0x00F0) >> 4];
@@ -99,8 +102,8 @@ void fetchDecodeExecuteInstruction() {
                     else context.V[0xF] = 0x0;
                     break;
                 case 0x6:
-                    context.V[0xF] = context.V[(opcode & 0x0F00) >> 8] & 0x01;
-                    context.V[(opcode & 0x0F00) >> 8] >>= 1;
+                    context.V[0xF] = context.V[(opcode & 0x00F0) >> 4] & 0x01;
+                    context.V[(opcode & 0x0F00) >> 8] = context.V[(opcode & 0x00F0) >> 4] >> 1;
                     break;
                 case 0x7:
                     context.V[(opcode & 0x0F00) >> 8] =
@@ -109,8 +112,8 @@ void fetchDecodeExecuteInstruction() {
                     else context.V[0xF] = 0x0;
                     break;
                 case 0xE:
-                    context.V[0xF] = context.V[(opcode & 0x0F00) >> 8] & 0x80; // get the rightmost bit
-                    context.V[(opcode & 0x0F00) >> 8] <<= 1;
+                    context.V[0xF] = context.V[(opcode & 0x00F0) >> 4] & 0x80; // get the rightmost bit
+                    context.V[(opcode & 0x0F00) >> 8] = context.V[(opcode & 0x00F0) >> 4] << 1;
                     break;
             default:
                     std::cout << "Opcode 0x8 not implemented, opcode :" << std::uppercase << std::hex << opcode << std::endl;
@@ -135,8 +138,8 @@ void fetchDecodeExecuteInstruction() {
             break;
         }
         case 0xD: {
-            const uint8_t x = context.V[(opcode & 0x0F00) >> 8];
-            const uint8_t y = context.V[(opcode & 0x00F0) >> 4];
+            const uint8_t x = context.V[(opcode & 0x0F00) >> 8] % 64;
+            const uint8_t y = context.V[(opcode & 0x00F0) >> 4] % 32;
             const uint8_t n = opcode & 0x000F;
             context.V[0xF] = 0x0;
 
@@ -145,8 +148,9 @@ void fetchDecodeExecuteInstruction() {
                 const uint8_t spriteRow = context.memory[context.I + i];
                 for (uint8_t j = 0; j < 8; j++) {
                     if (x + j >= 64) break;
-                    if (!(context.display[64 * (y + i) + x + j] ^= (spriteRow >> (7 - j)) & 0x1)) context.V[0xF] = 0x1;
-                    // if result of xor is 0 set F flag to 1
+
+                    if (context.display[64 * (y + i) + x + j] && (spriteRow >> (7 - j)) & 0x1) context.V[0xF] = 0x1;
+                    context.display[64 * (y + i) + x + j] ^= (spriteRow >> (7 - j)) & 0x1;
                 }
             }
 
@@ -196,10 +200,12 @@ void fetchDecodeExecuteInstruction() {
                 case 0x55:
                     for (uint32_t i = 0x0; i <= ((opcode & 0x0F00) >> 8); i++)
                         context.memory[context.I + i] = context.V[i];
+                    context.I += ((opcode & 0x0F00) >> 8) + 1;
                     break;
                 case 0x65:
                     for (uint32_t i = 0x0; i <= ((opcode & 0x0F00) >> 8); i++)
                         context.V[i] = context.memory[context.I + i];
+                    context.I += ((opcode & 0x0F00) >> 8) + 1;
                     break;
                 default:
                     std::cout << "Opcode 0xF not implemented, opcode : " << std::uppercase << std::hex << opcode << std::endl;
