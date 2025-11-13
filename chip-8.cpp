@@ -231,3 +231,7 @@ void decrementTimers() {
     if (context.delayTimer > 0) context.delayTimer--;
     if (context.soundTimer > 0) context.soundTimer--;
 }
+
+bool runAudio() {
+    return context.soundTimer > 0;
+}

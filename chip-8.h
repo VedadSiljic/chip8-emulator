@@ -21,5 +21,6 @@ void fetchDecodeExecuteInstruction();
 bool* getDisplay();
 void setInput(uint8_t value);
 void decrementTimers();
+bool runAudio();
 
 #endif

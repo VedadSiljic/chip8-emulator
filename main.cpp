@@ -1,20 +1,25 @@
+#include <cmath>
 #include "chip-8.h"
 #include <SDL3/SDL.h>
 
-#define GAME_FILENAME "5-quirks.ch8"
+#define GAME_FILENAME "7-beep.ch8"
 #define IS_DEBUG true
 #define INSTRUCTION_DELAY 1428571 // ~700Hz
 #define TIMER_DELAY 16666666 // ~60Hz
+
+static int current_sine_sample = 0; // For SDL audio
 
 struct SDLApplication {
     SDL_Window* window;
     SDL_Renderer* renderer;
     SDL_Texture* texture;
+    SDL_AudioStream* stream;
     bool isRunning = true;
+    bool isAudioRunning = false;
     uint64_t lastInstructionTime, lastTimerTime;
 
     SDLApplication() {
-        if (!SDL_Init(SDL_INIT_VIDEO)) SDL_Log("Init Error");
+        if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO)) SDL_Log("Init Error");
 
         window = SDL_CreateWindow("Chip-8", 800, 600, SDL_WINDOW_HIGH_PIXEL_DENSITY | SDL_WINDOW_RESIZABLE);
         renderer = SDL_CreateRenderer(window, nullptr);
@@ -25,6 +30,17 @@ struct SDLApplication {
 
         lastInstructionTime = SDL_GetTicksNS();
         lastTimerTime = SDL_GetTicksNS();
+
+        // Setup audio
+        SDL_AudioSpec spec;
+
+        spec.channels = 1;
+        spec.format = SDL_AUDIO_F32;
+        spec.freq = 8000;
+
+        stream = SDL_OpenAudioDeviceStream(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, &spec, FeedTheAudioStreamMore, nullptr);
+        //SDL_ResumeAudioStreamDevice(stream);
+        //SDL_PauseAudioStreamDevice(stream);
 
         // Init emulator
         startChip8(GAME_FILENAME);
@@ -134,6 +150,15 @@ struct SDLApplication {
             decrementTimers();
             lastTimerTime = currentTime;
         }
+
+        if (runAudio() && !isAudioRunning) {
+            isAudioRunning = true;
+            SDL_ResumeAudioStreamDevice(stream);
+        }
+        else if (!runAudio()) {
+            isAudioRunning = false;
+            SDL_PauseAudioStreamDevice(stream);
+        }
     }
 
     void Render() const {
@@ -154,10 +179,37 @@ struct SDLApplication {
         }
     }
 
+    static void SDLCALL FeedTheAudioStreamMore(void *userdata, SDL_AudioStream *astream, int additional_amount, int total_amount) {
+
+        additional_amount /= sizeof (float);  /* convert from bytes to samples */
+        while (additional_amount > 0) {
+            float samples[128];  /* this will feed 128 samples each iteration until we have enough. */
+            const int total = SDL_min(additional_amount, SDL_arraysize(samples));
+            int i;
+
+            /* generate a 500Hz pure tone */
+            for (i = 0; i < total; i++) {
+                const int freq = 500;
+                const float phase = current_sine_sample * freq / 8000.0f;
+                const float sample = SDL_sinf(phase * 2 * SDL_PI_F);
+                samples[i] = sample >= 0.0f ? 0.25f : -0.25f;
+                current_sine_sample++;
+            }
+
+            /* wrapping around to avoid floating-point errors */
+            current_sine_sample %= 8000;
+
+            /* feed the new data to the stream. It will queue at the end, and trickle out as the hardware needs more data. */
+            SDL_PutAudioStreamData(astream, samples, total * sizeof (float));
+            additional_amount -= total;  /* subtract what we've just fed the stream. */
+        }
+    }
+
     ~SDLApplication() {
         SDL_DestroyTexture(texture);
         SDL_DestroyRenderer(renderer);
         SDL_DestroyWindow(window);
+        SDL_DestroyAudioStream(stream);
         SDL_Quit();
     }
 
