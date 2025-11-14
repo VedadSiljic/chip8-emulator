@@ -218,7 +218,27 @@ void fetchDecodeExecuteInstruction() {
 
 void loadRomIntoMemory(const std::string &filename) {
     std::ifstream file(filename, std::ios::binary);
-    file.read(reinterpret_cast<char *>(context.memory + 0x200), 0x1000 - 0x200);
+    if (!file.is_open()) {
+        std::cerr << "Error: Could not open rom file " << filename << std::endl;
+        std::exit(EXIT_FAILURE);
+    }
+
+    // get file size
+    file.seekg(0, std::ios::end);
+    std::streamsize size = file.tellg();
+    file.seekg(0, std::ios::beg);
+
+    if (size > 0x1000 - 0x200) {
+        std::cerr << "Error: ROM too large" << std::endl;
+        std::exit(EXIT_FAILURE);
+    }
+
+    // read exactly 'size' bytes
+    if (!file.read(reinterpret_cast<char *>(context.memory + 0x200), size)) {
+        std::cerr << "Error: Failed to read from file " << filename << std::endl;
+        std::exit(EXIT_FAILURE);
+    }
+
     file.close();
 }
 
