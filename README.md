@@ -42,7 +42,7 @@ make
 ./chip-8 -d "<PATH_TO_ROM_FILE>"
 ```
 `-d` : (optional) Enables debug mode (prints keyboard state in the terminal).
-Replace the <PATH_TO_ROM_FILE> with the location of the of the rom file.
+Replace the <PATH_TO_ROM_FILE> with the location of the rom file.
 
 ## 🙏 Acknowledgements
 
